@@ -149,11 +149,9 @@ namespace WebApi.OutputCache.V2
             EnsureCacheTimeQuery();
             EnsureCache(config, actionContext.Request);
 
-            var cacheKeyGenerator = config.CacheOutputConfiguration().GetCacheKeyGenerator(actionContext.Request, CacheKeyGenerator);
-
             var responseMediaType = GetExpectedMediaType(config, actionContext);
             actionContext.Request.Properties[CurrentRequestMediaType] = responseMediaType;
-            var cachekey = cacheKeyGenerator.MakeCacheKey(actionContext, responseMediaType, ExcludeQueryStringFromCacheKey);
+            var cachekey = GenerateCachekey(actionContext, responseMediaType, config.CacheOutputConfiguration());
 
             if (!_webApiCache.Contains(cachekey)) return;
 
@@ -195,6 +193,13 @@ namespace WebApi.OutputCache.V2
             ApplyCacheHeaders(actionContext.Response, cacheTime);
         }
 
+        protected virtual string GenerateCachekey(HttpActionContext actionContext, MediaTypeHeaderValue responseMediaType, CacheOutputConfiguration cacheOutputConfiguration)
+        {
+            var cacheKeyGenerator = cacheOutputConfiguration.GetCacheKeyGenerator(actionContext.Request, CacheKeyGenerator);
+            var cachekey = cacheKeyGenerator.MakeCacheKey(actionContext, responseMediaType, ExcludeQueryStringFromCacheKey);
+            return cachekey;
+        }
+
         public override async Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
         {
             if (actionExecutedContext.ActionContext.Response == null || !actionExecutedContext.ActionContext.Response.IsSuccessStatusCode) return;
@@ -206,10 +211,9 @@ namespace WebApi.OutputCache.V2
             {
                 var httpConfig = actionExecutedContext.Request.GetConfiguration();
                 var config = httpConfig.CacheOutputConfiguration();
-                var cacheKeyGenerator = config.GetCacheKeyGenerator(actionExecutedContext.Request, CacheKeyGenerator);
 
                 var responseMediaType = actionExecutedContext.Request.Properties[CurrentRequestMediaType] as MediaTypeHeaderValue ?? GetExpectedMediaType(httpConfig, actionExecutedContext.ActionContext);
-                var cachekey = cacheKeyGenerator.MakeCacheKey(actionExecutedContext.ActionContext, responseMediaType, ExcludeQueryStringFromCacheKey);
+                var cachekey = GenerateCachekey(actionExecutedContext.ActionContext, responseMediaType, config);
 
                 if (!string.IsNullOrWhiteSpace(cachekey) && !(_webApiCache.Contains(cachekey)))
                 {
