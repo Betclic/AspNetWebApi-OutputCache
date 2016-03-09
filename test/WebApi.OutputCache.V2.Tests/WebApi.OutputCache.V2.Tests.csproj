@@ -89,9 +89,11 @@
     <Compile Include="InvalidateTests.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="RangeTests.cs" />
     <Compile Include="ServerSideTests.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="TestControllers\RangeController.cs" />
     <Compile Include="TestControllers\AutoInvalidateController.cs" />
     <Compile Include="TestControllers\AutoInvalidateWithTypeController.cs" />
     <Compile Include="TestControllers\CacheKeyController.cs" />
